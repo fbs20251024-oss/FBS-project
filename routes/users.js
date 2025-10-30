@@ -9,7 +9,8 @@ import {
 const router = express.Router();
 
 router.get("/", verifyToken, verifyRole("admin"), getUsers);
-router.delete("/:id", verifyToken, verifyRole("admin"), deleteUser);
 router.get("/me", verifyToken, getProfile);
+//router.get("update/me", verifyToken, updateProfile);
+router.delete("/:id", verifyToken, verifyRole("admin"), deleteUser);
 
 export default router;

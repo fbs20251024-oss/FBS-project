@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
+import facilityRoutes from "./routes/facilities.js";
+import bookingRoutes from "./routes/bookings.js";
 import { connectDB } from "./config/db.js";
 import cors from "cors";
 
@@ -23,6 +25,8 @@ app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/facilities", facilityRoutes);
+app.use("/api/bookings", bookingRoutes);
 
 connectDB();
 
