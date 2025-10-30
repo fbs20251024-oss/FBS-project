@@ -9,5 +9,4 @@ const facilitySchema = new mongoose.Schema(
   { timestamps: true}
 )
 
-
-module.exports = mongoose.model("Facility", facilitySchema);
+export default mongoose.model("Facility", facilitySchema);
