@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const facilitySchema = new mongoose.Schema(
   {
@@ -8,5 +8,6 @@ const facilitySchema = new mongoose.Schema(
   },
   { timestamps: true}
 )
+
 
 module.exports = mongoose.model("Facility", facilitySchema);
