@@ -1,6 +1,7 @@
 import Booking from "../models/Booking.js";
 
 export const addBooking = async (req, res) => {
+
     const { booking: { facilityId, userId, date, session } } = req.body;
 
     if (!facilityId || !userId || !date || !session) {
@@ -13,7 +14,7 @@ export const addBooking = async (req, res) => {
             return res.status(400).json({ message: "Booking already exists" });
         }
 
-        const booking = new Booking({
+        let booking = new Booking({
             facility: facilityId,
             user: userId,
             date,
@@ -21,13 +22,13 @@ export const addBooking = async (req, res) => {
         });
         await booking.save();
 
-        const newBooking = await Booking.findOne(booking._id)
+        booking = await Booking.findOne(booking._id)
             .populate("user", "username")
             .populate("facility", "facilityName");
 
         res.status(201).json({
             message: "Booking created successfully",
-            newBooking,
+            booking,
         });
     } catch (error) {
         console.error("Error creating booking", error);
@@ -36,15 +37,14 @@ export const addBooking = async (req, res) => {
 };
 
 export const getBooking = async (req, res) => {
-    if (req.path.includes("/user/") || req.path.includes("/facility/")) {
-        try {
+
+    try {
+        if (["/user/", "/facility/"].some(sub => req.path.includes(sub))) {
+
             let query = {};
 
-            if (req.path.includes("/user/")) {
-                query.user = req.params.id;
-            } else if (req.path.includes("/facility/")) {
-                query.facility = req.params.id;
-            }
+            if (req.path.includes("/user/")) query.user = req.params.id;
+            if (req.path.includes("/facility/")) query.facility = req.params.id;
 
             const bookings = await Booking.find(query)
                 .populate("user", "username")
@@ -55,12 +55,7 @@ export const getBooking = async (req, res) => {
             }
             const total = bookings.length;
             res.status(200).json({ bookings, total });
-        } catch (error) {
-            console.error("Error fetching booking:", error);
-            return res.status(500).json({ message: "Server error" });
-        }
-    } else {
-        try {
+        } else {
             const booking = await Booking.findById(req.params.id)
                 .populate("user", "username")
                 .populate("facility", "facilityName");
@@ -69,10 +64,11 @@ export const getBooking = async (req, res) => {
                 return res.status(404).json({ message: "Booking not found" });
             }
             res.status(200).json({ booking });
-        } catch (error) {
-            console.error("Error fetching booking:", error);
-            return res.status(500).json({ message: "Server error" });
         }
+
+    } catch (error) {
+        console.error("Error fetching booking:", error);
+        return res.status(500).json({ message: "Server error" });
     }
 };
 
@@ -91,7 +87,7 @@ export const updateBooking = async (req, res) => {
         const facilityId = booking.facility._id;
 
         const existingBooking = await Booking.findOne({
-            facility: facilityId, date, session, _id: { $ne: booking._id }
+            _id: booking._id, facility: facilityId, date, session, 
         });
         if (existingBooking) {
             return res.status(400).json({ message: "Booking already exists" });
@@ -112,3 +108,16 @@ export const updateBooking = async (req, res) => {
     }
 };
 
+export const deleteBooking = async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id);
+        if (!booking) {
+            return res.status(404).json({ message: "Booking not found" });
+        }
+        await Booking.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: "Booking deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting booking:", error);
+        return res.status(500).json({ message: "Server error" });
+    }
+};

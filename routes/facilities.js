@@ -8,7 +8,6 @@ import {
 
 const router = express.Router();
 
-
 router.post("/", createFacility);
 router.get("/", getFacility);
 router.get("/:id", getFacility);

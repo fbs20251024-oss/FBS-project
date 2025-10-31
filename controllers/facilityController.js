@@ -20,12 +20,7 @@ export const createFacility = async (req, res) => {
     await facility.save();
     res.status(201).json({
       message: "Facility created successfully",
-      facility: {
-        id: facility._id,
-        facilityName: facility.facilityName,
-        description: facility.description,
-        facilityStatus: facility.facilityStatus,
-      },
+      facility,
     });
   } catch (error) {
     console.error("Error creating facility:", error);
@@ -72,7 +67,7 @@ export const updateFacility = async (req, res) => {
     if (!facility) {
       return res.status(404).json({ message: "Facility not found" });
     }
-    if (facilityName) facility.facilityName = facilityName;
+    //if (facilityName) facility.facilityName = facilityName;
     if (description) facility.description = description;
     if (facilityStatus) facility.facilityStatus = facilityStatus;
     await facility.save();

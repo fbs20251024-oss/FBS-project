@@ -1,19 +1,18 @@
 import express from "express";
 import { verifyRole, verifyToken } from "../middleware/authMiddleware.js";
 import {
-  deleteUser,
-  getProfile,
   getUsers,
+  getProfile,
   updateProfile,
-  adminUpdateProfile
+  deleteUser,
 } from "../controllers/userController.js";
 
 const router = express.Router();
 
 router.get("/", verifyToken, verifyRole("admin"), getUsers);
 router.get("/me", verifyToken, getProfile);
-router.put("/update/me", verifyToken, updateProfile);
-router.put("/update/:id", verifyToken,verifyRole("admin"), adminUpdateProfile);
+router.put("/", verifyToken, updateProfile);
+router.put("/:id", verifyToken,verifyRole("admin"), updateProfile);
 router.delete("/:id", verifyToken, verifyRole("admin"), deleteUser);
 
 export default router;
