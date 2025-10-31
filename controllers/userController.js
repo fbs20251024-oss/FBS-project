@@ -53,6 +53,7 @@ export const getProfile = async (req, res) => {
 //API for Updating User Profile
 export const updateProfile = async (req, res) =>{
   try {
+    // const { user: {}}
     const userId = req.user?.id; // 從JWT解碼結果取得user id
     if (!userId){
       return res.status(401).json({ success: false, msg: 'Unauthorized: No user logged in' });
@@ -60,7 +61,7 @@ export const updateProfile = async (req, res) =>{
 
     const {username, email, password} = req.body;
 
-    if (!email && !password) { 
+    if (!username && !email && !password) { 
             return res.status(400).json({
                 success:false, msg: "Please enter correct update information"
             });
@@ -82,6 +83,8 @@ export const updateProfile = async (req, res) =>{
                 success:false, msg: "Profile not found"
                 });
         };
+
+    res.status(200).json({success: true, data:updateProfile});
     
   } catch (error) {
     console.error("Error updating profile:", error);
@@ -128,6 +131,8 @@ export const adminUpdateProfile = async (req, res) =>{
                 success:false, msg: "Profile not found"
                 });
         };
+      
+   res.status(200).json({success: true, data: updateProfile}); 
     
   } catch (error) {
     console.error("Error updating profile:", error);
