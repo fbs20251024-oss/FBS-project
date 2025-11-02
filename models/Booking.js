@@ -15,4 +15,15 @@ bookingSchema.index(
   { unique: true, partialFilterExpression: { bookingStatus: { $ne: "cancel" } } }
 );
 
+bookingSchema.pre('save', async function (next) {
+  const [User, Facility] = [mongoose.model('User'), mongoose.model('Facility')];
+  const [userExists, facilityExists] = await Promise.all([
+    User.exists({ _id: this.user }),
+    Facility.exists({ _id: this.facility })
+  ]);
+  if (!userExists) return next(new Error('Referenced user does not exist.'));
+  if (!facilityExists) return next(new Error('Referenced facility does not exist.'));
+  next();
+});
+
 export default mongoose.model("Booking", bookingSchema);
