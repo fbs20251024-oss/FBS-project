@@ -9,10 +9,10 @@ import {
 
 const router = express.Router();
 
-router.post("/", createFacility); // admin
-router.get("/", getFacility);
-router.get("/:id", getFacility);
-router.put("/:id", updateFacility); // admin
-router.delete("/:id", deleteFacility); // admin
+router.post("/", verifyToken, verifyRole("admin"), createFacility); // admin
+router.get("/", verifyToken, getFacility);
+router.get("/:id", verifyToken, getFacility);
+router.put("/:id", verifyToken, verifyRole("admin"), updateFacility); // admin
+router.delete("/:id", verifyToken, verifyRole("admin"), deleteFacility); // admin
 
 export default router;

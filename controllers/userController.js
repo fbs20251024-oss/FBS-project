@@ -36,16 +36,11 @@ export const getProfile = async (req, res) => {
 //API for Updating User Profile
 export const updateProfile = async (req, res) => {
   try {
-    // const { user: {}}
-    let userId = req.user?.id; // 從JWT解碼結果取得user id
-
-    if (req.path.includes("me")) userId = req.params.id;
-
-    if (!userId) {
-      return res.status(401).json({ success: false, msg: 'Unauthorized: No user logged in' });
+    const userId = req.params.id || req.user?.id; // 從JWT解碼結果取得user id
+    if (!req.user?.id) {
+      return res.status(401).json({ success: false, message: 'Unauthorized: No user logged in' });
     };
-
-    const { user: { username, email, password, role } } = req.body;
+    const { username, email, password, role } = req.body.user || {};
     //Const UpdateFields
     const updateFields = {};
     if (username) updateFields.username = username;
@@ -53,25 +48,35 @@ export const updateProfile = async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, 10);
       updateFields.password = hashedPassword;
     };
-    if (req.user?.role === "admin") {
-      if (email) updateFields.email = email;
+    if (req.user?.role === "admin" && req.params.id) {
+      if (email) {
+        const existing = await User.findOne({ email }).lean();
+        if (existing && existing._id.toString() !== userId) {
+          return res.status(409).json({ success: false, message: "Email already in use" });
+        }
+        updateFields.email = email;
+      }
       if (role) {
         if (!['user', 'admin', 'na'].includes(role)) {
-          return res.status(400).json({ success: false, msg: 'Invalid role' });
+          return res.status(400).json({ success: false, message: 'Invalid role' });
         }
         updateFields.role = role;
       }
+      console.log(`Admin ${req.user.id} updated user ${req.params.id}`);
     };
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ success: false, message: "No valid fields provided for update" });
+    }
 
-    const updateProfile = await User.findByIdAndUpdate(userId, { $set: updateFields }, { new: true });
+    const updateUser = await User.findByIdAndUpdate(userId, { $set: updateFields }, { new: true });
 
-    if (!updateProfile) {
+    if (!updateUser) {
       return res.status(404).json({
-        success: false, msg: "Profile not found"
+        success: false, message: "Profile not found"
       });
     };
 
-    res.status(200).json({ success: true, updateProfile });
+    res.status(200).json({ success: true, updateUser });
 
   } catch (error) {
     console.error("Error updating profile:", error);
@@ -81,14 +86,13 @@ export const updateProfile = async (req, res) => {
 
 export const deleteUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
     if (user.role === "admin") {
       return res.status(403).json({ message: "Cannot delete admin users" });
     }
-    await User.findByIdAndDelete(req.params.id);
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
     console.error("Error deleting user:", error);

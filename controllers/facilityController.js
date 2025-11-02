@@ -1,26 +1,25 @@
 import Facility from "../models/Facility.js";
 
-export const createFacility = async (req, res) => {
-  const { facility: { facilityName, description } } = req.body;
+const isFacilityNameTaken = async (name, currentId = null) => { // can put at util.js
+  const existing = await Facility.findOne({ facilityName: name }).lean();
+  return existing && existing._id.toString() !== currentId;
+};
 
+export const createFacility = async (req, res) => {
+  const { facilityName, description } = req.body.facility || {};
   if (!facilityName || !description) {
     return res.status(400).json({ message: "All fields are required" });
   }
-
   try {
-    const existingFacility = await Facility.findOne({ facilityName });
-    if (existingFacility) {
-      return res.status(400).json({ message: "Facility already exists" });
+    if (await isFacilityNameTaken(facilityName)) {
+      return res.status(409).json({ success: false, message: "Facility Name already in use" });
     }
-
     const facility = new Facility({
-      facilityName,
-      description,
+      facilityName, description,
     });
     await facility.save();
     res.status(201).json({
-      message: "Facility created successfully",
-      facility,
+      message: "Facility created successfully", facility,
     });
   } catch (error) {
     console.error("Error creating facility:", error);
@@ -48,10 +47,7 @@ export const getFacility = async (req, res) => {
       const total = await Facility.countDocuments();
       const facilities = await Facility.find().skip(skip).limit(limit);
       res.status(200).json({
-        facilities,
-        total,
-        totalPages: Math.ceil(total / limit),
-        currentPage: page,
+        facilities, total, totalPages: Math.ceil(total / limit), currentPage: page,
       });
     } catch (error) {
       console.error("Error fetching facilities:", error);
@@ -61,20 +57,24 @@ export const getFacility = async (req, res) => {
 };
 
 export const updateFacility = async (req, res) => {
-  const { facility: { facilityName, description, facilityStatus } } = req.body;
+  const { facilityName, description, facilityStatus } = req.body.facility || {};
+  const { id } = req.params;
   try {
-    const facility = await Facility.findById(req.params.id);
+    const facility = await Facility.findById(id);
     if (!facility) {
       return res.status(404).json({ message: "Facility not found" });
     }
-    //if (facilityName) facility.facilityName = facilityName;
-    if (description) facility.description = description;
     if (facilityStatus) facility.facilityStatus = facilityStatus;
+    else {
+      if (facilityName && await isFacilityNameTaken(facilityName, id)) {
+        return res.status(409).json({ success: false, message: "Facility Name already in use" });
+      }
+      if (facilityName) facility.facilityName = facilityName;
+      if (description) facility.description = description;
+    }
     await facility.save();
-
     res.status(200).json({
-      message: "Facility updated successfully",
-      facility,
+      message: "Facility updated successfully", facility,
     });
   } catch (error) {
     console.error("Error updating facility:", error);
@@ -84,11 +84,10 @@ export const updateFacility = async (req, res) => {
 
 export const deleteFacility = async (req, res) => {
   try {
-    const facility = await Facility.findById(req.params.id);
+    const facility = await Facility.findByIdAndDelete(req.params.id);
     if (!facility) {
       return res.status(404).json({ message: "Facility not found" });
     }
-    await Facility.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Facility deleted successfully" });
   } catch (error) {
     console.error("Error deleting facility:", error);

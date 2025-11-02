@@ -9,11 +9,11 @@ import {
 
 const router = express.Router();
 
-router.post("/", addBooking);
-router.get("/:id", getBooking);
-router.get("/user/:id", getBooking);
-router.get("/facility/:id", getBooking); // admin
-router.put("/:id", updateBooking);
-router.delete("/:id", deleteBooking); // admin
+router.post("/", verifyToken, addBooking);
+router.get("/:id", verifyToken, getBooking);
+router.get("/user/:id", verifyToken, getBooking);
+router.get("/facility/:id", verifyToken, getBooking);
+router.put("/:id", verifyToken, updateBooking);
+router.delete("/:id", verifyToken, verifyRole("admin"), deleteBooking); // admin
 
 export default router;
