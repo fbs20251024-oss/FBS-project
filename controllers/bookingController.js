@@ -11,7 +11,7 @@ function isValidDate(dateString) { // can put at util.js
 
 export const addBooking = async (req, res) => {
   const { facilityId, date, session } = req.body.booking || {};
-  const userId = req.body.booking.userId || req.user?.id;
+  const userId = req.user.id;
   if (!facilityId || !userId || !date || !session) {
     return res.status(400).json({ message: "All fields are required" });
   }
@@ -51,13 +51,13 @@ export const getBooking = async (req, res) => {
   else query._id = params.id;
   try {
     const booking = isUserRoute || isFacilityRoute
-      ? await Booking.find(query)
+      ? await Booking.find(query).sort({ date: 1 })
       : await Booking.findOne(query);
     const isEmpty = Array.isArray(booking) ? booking.length === 0 : !booking;
     if (isEmpty) {
       return res.status(404).json({ message: isUserRoute || isFacilityRoute ? "No Booking found" : "Booking not found" });
     }
-    let role = req.user?.role; // admin
+    let role = req.user.role; // admin
     const populateFields = [
       ...(role === "admin" ? [{ path: "user", select: "username" }] : []),
       { path: "facility", select: "facilityName" },
@@ -80,7 +80,7 @@ export const updateBooking = async (req, res) => {
       return res.status(400).json({ message: "Date must be today or later" });
     }
   }
-  let role = req.user?.role; // admin
+  let role = req.user.role; // admin
   if (bookingStatus === "complete" && role !== "admin") {
     return res.status(400).json({ success: false, message: 'Invalid role' });
   }
