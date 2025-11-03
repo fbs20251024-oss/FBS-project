@@ -14,6 +14,6 @@ router.get("/:id", verifyToken, getBooking);
 router.get("/user/:id", verifyToken, getBooking);
 router.get("/facility/:id", verifyToken, getBooking);
 router.put("/:id", verifyToken, updateBooking);
-router.delete("/:id", verifyToken, verifyRole("admin"), deleteBooking); // admin
+router.delete("/:id", verifyToken, verifyRole("admin"), deleteBooking);
 
 export default router;

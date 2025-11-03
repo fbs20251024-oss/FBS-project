@@ -14,9 +14,7 @@ export const createFacility = async (req, res) => {
     if (await isFacilityNameTaken(facilityName)) {
       return res.status(409).json({ success: false, message: "Facility Name already in use" });
     }
-    const facility = new Facility({
-      facilityName, description,
-    });
+    const facility = new Facility({ facilityName, description, });
     await facility.save();
     res.status(201).json({
       message: "Facility created successfully", facility,

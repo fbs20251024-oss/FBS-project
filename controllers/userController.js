@@ -1,5 +1,4 @@
 import User from "../models/User.js";
-import bcrypt from "bcryptjs";
 
 export const getUsers = async (req, res) => {
   try {
@@ -9,10 +8,7 @@ export const getUsers = async (req, res) => {
     const total = await User.countDocuments();
     const users = await User.find().skip(skip).limit(limit).select("-password");
     res.status(200).json({
-      users,
-      total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
+      users, total, totalPages: Math.ceil(total / limit), currentPage: page,
     });
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -22,10 +18,9 @@ export const getUsers = async (req, res) => {
 
 export const getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    const userId = req.params.id || req.user.id;
+    const user = await User.findById(userId).select("-password").lean();
+    if (!user) return res.status(404).json({ message: "User not found" });
     res.status(200).json({ user });
   } catch (error) {
     console.error("Error fetching profile:", error);
@@ -36,19 +31,13 @@ export const getProfile = async (req, res) => {
 //API for Updating User Profile
 export const updateProfile = async (req, res) => {
   try {
-    const userId = req.params.id || req.user?.id; // 從JWT解碼結果取得user id
-    if (!req.user?.id) {
-      return res.status(401).json({ success: false, message: 'Unauthorized: No user logged in' });
-    };
+    const userId = req.params.id || req.user.id; // 從JWT解碼結果取得user id
     const { username, email, password, role } = req.body.user || {};
     //Const UpdateFields
     const updateFields = {};
     if (username) updateFields.username = username;
-    if (password) { //Handle Password
-      const hashedPassword = await bcrypt.hash(password, 10);
-      updateFields.password = hashedPassword;
-    };
-    if (req.user?.role === "admin" && req.params.id) {
+    if (password) updateFields.password = password;
+    if (req.user.role === "admin" && req.params.id) {
       if (email) {
         const existing = await User.findOne({ email }).lean();
         if (existing && existing._id.toString() !== userId) {
