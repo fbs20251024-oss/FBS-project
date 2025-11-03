@@ -75,8 +75,10 @@ export const getBooking = async (req, res) => {
 
 export const updateBooking = async (req, res) => {
   const { date, session, bookingStatus } = req.body.booking || {};
-  if (!isValidDate(date)) {
-    return res.status(400).json({ message: "Date must be today or later" });
+  if (date) {
+    if (!isValidDate(date)) {
+      return res.status(400).json({ message: "Date must be today or later" });
+    }
   }
   let role = req.user?.role; // admin
   if (bookingStatus === "complete" && role !== "admin") {
