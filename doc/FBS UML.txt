@@ -1,0 +1,263 @@
+//Class Diagram
+@startuml
+
+skinparam class {
+  RoundCorner 0
+  BackgroundColor White
+  BorderColor Black
+}
+
+class User {
+  - username: String
+  - email: String
+  - password: String
+  - role: String
+  + register()
+  + login()
+  + logout()
+  + refreshToken()
+  + getProfile()
+  + updateProfile()
+  + getFacility()
+  + addBooking()
+  + getBooking()
+  + updateBooking()
+}
+
+class Admin {
+  + getUsers()
+  + deleteUser()
+  + createFacility()
+  + updateFacility()
+  + deleteFacility()
+  + deleteBooking()
+}
+
+class Booking {
+  - facility: Facility
+  - user: User
+  - date: Date
+  - session: String
+  - bookingStatus: String
+}
+
+class Facility {
+  - facilityName: String
+  - description: String
+  - facilityStatus: String
+}
+
+Admin --|> User
+User "1" --> "many" Booking : makes
+Booking "many" --> "1" Facility : booked
+Booking "1" --> "1" User : by
+
+@enduml
+
+//Sequence Diagram
+@startuml
+
+actor User
+
+participant "AuthService" as Auth
+participant "UserService" as UserSvc
+participant "FacilityService" as FacilitySvc
+participant "BookingService" as BookingSvc
+
+actor Admin
+
+== User & Admin Authentication ==
+User -> Auth : register(username, email, password)
+Auth --> User : success / error
+
+User -> Auth : login(email, password)
+Auth --> User : accessToken, refreshToken
+
+User -> Auth : refreshToken()
+Auth --> User : new accessToken
+
+User -> Auth : logout()
+Auth --> User : logout confirmation
+
+Admin -> Auth : login(email, password)
+Auth --> Admin : accessToken
+
+== User Profile & Admin User Management ==
+User -> UserSvc : getProfile()
+UserSvc --> User : profile data
+
+User -> UserSvc : updateProfile()
+UserSvc --> User : update confirmation
+
+Admin -> UserSvc : getUsers()
+UserSvc --> Admin : list of users
+
+Admin -> UserSvc : updateProfile(userId, updates)
+UserSvc --> Admin : update confirmation
+
+Admin -> UserSvc : deleteUser(userId)
+UserSvc --> Admin : deletion confirmation
+
+== Facility Browsing & Admin Facility Management ==
+User -> FacilitySvc : getFacility()
+FacilitySvc --> User : list of facilities
+
+Admin -> FacilitySvc : createFacility(name, description, status)
+FacilitySvc --> Admin : facility created
+
+Admin -> FacilitySvc : updateFacility(facilityId, updates)
+FacilitySvc --> Admin : update confirmation
+
+Admin -> FacilitySvc : deleteFacility(facilityId)
+FacilitySvc --> Admin : deletion confirmation
+
+== Booking Operations & Admin Booking Management ==
+User -> BookingSvc : addBooking(facilityId, date, session)
+BookingSvc --> User : booking confirmation
+
+User -> BookingSvc : getBooking(by user or facility)
+BookingSvc --> User : list of bookings
+
+User -> BookingSvc : getBooking(bookingId)
+BookingSvc --> User : booking details
+
+User -> BookingSvc : updateBooking()
+BookingSvc --> User : update confirmation
+
+Admin -> BookingSvc : updateBooking(bookingId, updates)
+BookingSvc --> Admin : update confirmation
+
+Admin -> BookingSvc : deleteBooking(bookingId)
+BookingSvc --> Admin : booking deleted
+
+@enduml
+
+// Use Case Diagram
+@startuml
+left to right direction
+
+actor User
+actor Admin
+
+rectangle "Facility Booking System" {
+
+  package "Authentication" {
+    User --> (Register)
+    User --> (Login)
+    User --> (Refresh Token)
+    User --> (Logout)
+
+    Admin --> (Login)
+  }
+
+  package "User Management" {
+    User --> (View Profile)
+    User --> (Update Profile)
+
+    Admin --> (View Users)
+    Admin --> (Update User Profile)
+    Admin --> (Delete User)
+  }
+
+  package "Facility Management" {
+    User --> (Browse Facilities)
+
+    Admin --> (Create Facility)
+    Admin --> (Update Facility)
+    Admin --> (Delete Facility)
+  }
+
+  package "Booking Management" {
+    User --> (Add Booking)
+    User --> (View Bookings)
+    User --> (View Booking Details)
+    User --> (Update Booking)
+
+    Admin --> (Update Booking)
+    Admin --> (Delete Booking)
+  }
+}
+
+@enduml
+
+facility book system
+User System
+user registration
+user and admin Login/Logout
+user check and update user profile
+admin check, update and delete users
+
+Facility System
+user browse available facilities
+admin add, update and delete facilities
+
+Booking System
+user add, update and cancel bookings
+admin check, update and delete bookings
+
+@startuml
+title Facility Booking System - Modular Use Case Diagram
+
+left to right direction
+
+skinparam backgroundColor #F9F9F9
+
+skinparam actor {
+  BackgroundColor<<User>> Orange
+  BackgroundColor<<Admin>> Red
+  BorderColor Black
+  FontColor Black
+}
+
+actor User <<User>>
+actor Admin <<Admin>>
+
+rectangle "User System" {
+  skinparam package {
+    BackgroundColor #FFF3E0
+    BorderColor #FB8C00
+    FontColor #E65100
+  }
+
+  (Register) as UC0
+  (Login/Logout) as UC1
+  (Check and update user profile) as UC3
+  (Check, update and delete users) as UC4
+
+  User --> UC0
+  User --> UC1
+  User --> UC3
+
+  Admin --> UC1
+  Admin --> UC4
+}
+
+rectangle "Facility System" {
+  skinparam package {
+    BackgroundColor #E8F5E9
+    BorderColor #43A047
+    FontColor #1B5E20
+  }
+
+  (Browse available facilities) as UC5
+  (Add, update and delete facilities) as UC6
+
+  User --> UC5
+  Admin --> UC6
+}
+
+rectangle "Booking System" {
+  skinparam package {
+    BackgroundColor #E3F2FD
+    BorderColor #1E88E5
+    FontColor #0D47A1
+  }
+
+  (Add, update and cancel bookings) as UC7
+  (Check, update and delete bookings) as UC8
+
+  User --> UC7
+  Admin --> UC8
+}
+
+@enduml
