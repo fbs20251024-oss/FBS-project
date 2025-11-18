@@ -33,39 +33,29 @@ export const updateProfile = async (req, res) => {
   try {
     const userId = req.params.id || req.user.id; // 從JWT解碼結果取得user id
     const { username, email, password, role } = req.body.user || {};
-    //Const UpdateFields
-    const updateFields = {};
-    if (username) updateFields.username = username;
-    if (password) updateFields.password = password;
+    const user = await User.findById(userId);
+    if (!user) { return res.status(404).json({ message: "User not found" }) };
+    if (username) user.username = username;
+    if (password) user.password = password;
     if (req.user.role === "admin" && req.params.id) {
       if (email) {
         const existing = await User.findOne({ email }).lean();
         if (existing && existing._id.toString() !== userId) {
           return res.status(409).json({ success: false, message: "Email already in use" });
         }
-        updateFields.email = email;
+        user.email = email;
       }
       if (role) {
         if (!['user', 'admin', 'na'].includes(role)) {
           return res.status(400).json({ success: false, message: 'Invalid role' });
         }
-        updateFields.role = role;
+        user.role = role;
       }
       console.log(`Admin ${req.user.id} updated user ${req.params.id}`);
     };
-    if (Object.keys(updateFields).length === 0) {
-      return res.status(400).json({ success: false, message: "No valid fields provided for update" });
-    }
+    await user.save();
 
-    const updateUser = await User.findByIdAndUpdate(userId, { $set: updateFields }, { new: true });
-
-    if (!updateUser) {
-      return res.status(404).json({
-        success: false, message: "Profile not found"
-      });
-    };
-
-    res.status(200).json({ success: true, updateUser });
+    res.status(200).json({ success: true, user });
 
   } catch (error) {
     console.error("Error updating profile:", error);
@@ -75,12 +65,12 @@ export const updateProfile = async (req, res) => {
 
 export const deleteUser = async (req, res) => {
   try {
-    if (user.role === "admin") {
-      return res.status(403).json({ message: "Cannot delete admin users" });
-    }
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+    if (user.role === "admin") {
+      return res.status(403).json({ message: "Cannot delete admin users" });
     }
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
